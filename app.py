@@ -4,6 +4,9 @@ from report_generator import generate_real_report
 from ttf_scraper import get_ttf_prices
 from power_scraper import get_power_prices
 from real_chart import generate_real_chart
+from gie_api import get_gie_storage_level
+from gme_reader import get_latest_pun_price
+from meteo_api import get_openmeteo_forecast
 import os
 
 st.set_page_config(page_title="Hedging Dashboard", layout="wide")
@@ -25,6 +28,15 @@ if st.button("🔁 Genera Report"):
         for k, v in power_data.items():
             st.write(f"{k}: {v}")
 
+        st.subheader("📦 Storage Gas UE")
+        st.write(get_gie_storage_level())
+
+        st.subheader("⚡ Prezzo medio PUN Italia")
+        st.write(get_latest_pun_price())
+
+        st.subheader("🌡️ Meteo Milano (oggi)")
+        st.write(get_openmeteo_forecast())
+
         for paese in ["Italia", "Francia", "Germania"]:
             st.subheader(f"📍 {paese}")
             col1, col2, col3 = st.columns(3)
@@ -35,7 +47,6 @@ if st.button("🔁 Genera Report"):
                 colore = "🟢" if segnale == "HEDGIARE" else "🔴"
                 col.metric(prodotto, f"{colore} {segnale}", motivo)
 
-                # Mostra il grafico reale per ogni prodotto
                 chart_path = generate_real_chart(f"{paese} {prodotto}")
                 if chart_path and os.path.exists(chart_path):
                     col.image(chart_path, caption=f"{paese} {prodotto} - Storico")
