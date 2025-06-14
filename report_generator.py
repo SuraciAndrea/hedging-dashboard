@@ -29,6 +29,8 @@ def generate_fake_report():
     return report
 
 def generate_dummy_chart():
+    import os
+
     x = pd.date_range("2025-01-01", periods=60)
     y = np.random.normal(loc=95, scale=5, size=60)
 
@@ -39,7 +41,10 @@ def generate_dummy_chart():
     plt.title("Italia Cal-26 - Prezzo Simulato")
     plt.legend()
     plt.tight_layout()
+
+    # Corretto salvataggio in cartella charts/
     chart_path = "charts/chart_italia_cal26.png"
-    plt.savefig(os.path.join(base_path, chart_path))
+    os.makedirs("charts", exist_ok=True)
+    plt.savefig(chart_path)
     plt.close()
     return chart_path
