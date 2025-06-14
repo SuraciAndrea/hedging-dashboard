@@ -8,7 +8,7 @@ from chart_generator import generate_price_chart
 import os
 
 st.set_page_config(page_title="Hedging Dashboard", layout="wide")
-st.title("📊 Dashboard Hedging Energia")
+st.title("📊 Dashboard Hedging Energia – Prezzi reali cmdty")
 
 if st.button("🔁 Genera Report"):
     with st.spinner("Analisi in corso..."):
@@ -16,15 +16,17 @@ if st.button("🔁 Genera Report"):
         ttf_data = get_ttf_prices()
         power_data = get_power_prices()
 
-        st.success("Report generato con logica reale")
+        st.success("Report generato con logica reale e prezzi cmdty")
 
         st.subheader("💨 Prezzi TTF (Investing.com)")
         for k, v in ttf_data.items():
             st.write(f"{k}: {v}")
 
-        st.subheader("⚡ Prezzi Energia (Investing.com)")
-        for k, v in power_data.items():
-            st.write(f"{k}: {v}")
+        st.subheader("⚡ Prezzi Future Energia (ICE cmdty)")
+        for paese in power_data:
+            st.write(f"📍 {paese}")
+            for prodotto, prezzo in power_data[paese].items():
+                st.write(f"{prodotto}: {prezzo} €/MWh")
 
         for paese in ["Italia", "Francia", "Germania"]:
             st.subheader(f"📍 {paese}")
@@ -39,7 +41,6 @@ if st.button("🔁 Genera Report"):
                 testo = f"{colore} {segnale} a {prezzo} €/MWh"
                 col.metric(prodotto, testo, motivo)
 
-                # Salva e mostra grafico
                 log_price(paese, prodotto, prezzo)
                 chart_path = generate_price_chart(paese, prodotto)
                 if chart_path and os.path.exists(chart_path):
