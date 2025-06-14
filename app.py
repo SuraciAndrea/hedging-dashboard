@@ -3,11 +3,12 @@ import streamlit as st
 from report_generator import generate_real_report
 from ttf_scraper import get_ttf_prices
 from power_scraper import get_power_prices
-from investpy_chart import get_investpy_chart
+from price_logger import log_price
+from chart_generator import generate_price_chart
 import os
 
 st.set_page_config(page_title="Hedging Dashboard", layout="wide")
-st.title("📊 Dashboard Hedging Energia - investpy")
+st.title("📊 Dashboard Hedging Energia")
 
 if st.button("🔁 Genera Report"):
     with st.spinner("Analisi in corso..."):
@@ -15,7 +16,7 @@ if st.button("🔁 Genera Report"):
         ttf_data = get_ttf_prices()
         power_data = get_power_prices()
 
-        st.success("Report generato con dati reali")
+        st.success("Report generato con logica reale")
 
         st.subheader("💨 Prezzi TTF (Investing.com)")
         for k, v in ttf_data.items():
@@ -30,16 +31,16 @@ if st.button("🔁 Genera Report"):
             col1, col2, col3 = st.columns(3)
             for i, prodotto in enumerate(report[paese]):
                 col = [col1, col2, col3][i]
-                segnale = report[paese][prodotto]["segnale"]
-                motivo = report[paese][prodotto]["motivazione"]
+                entry = report[paese][prodotto]
+                segnale = entry["segnale"]
+                motivo = entry["motivazione"]
+                prezzo = entry["prezzo"]
                 colore = "🟢" if segnale == "HEDGIARE" else "🔴"
-                col.metric(prodotto, f"{colore} {segnale}", motivo)
+                testo = f"{colore} {segnale} a {prezzo} €/MWh"
+                col.metric(prodotto, testo, motivo)
 
-                # Prova generazione grafico da investpy
-                product_name = "Electricity"
-                country = paese
-                chart_path = get_investpy_chart(product_name=product_name, country=country)
+                # Salva e mostra grafico
+                log_price(paese, prodotto, prezzo)
+                chart_path = generate_price_chart(paese, prodotto)
                 if chart_path and os.path.exists(chart_path):
-                    col.image(chart_path, caption=f"{product_name} {paese}")
-                else:
-                    col.warning(f"Nessun grafico disponibile per {paese}")
+                    col.image(chart_path, caption=f"{paese} {prodotto} - Andamento storico")
