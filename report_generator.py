@@ -24,25 +24,29 @@ def decide_signal(power_price, ttf_price, prices_history):
     rsi = compute_rsi(prices_history)
     ma200 = compute_ma(prices_history, 200)
     ma50 = compute_ma(prices_history, 50)
+    spread = power_price - ttf_price
 
     motivazione = []
     score = 0
 
     if power_price < support:
         score += 1
-        motivazione.append("Prezzo power sotto supporto tecnico → rischio rimbalzo")
+        motivazione.append("Prezzo sotto supporto tecnico")
     if ttf_price > coal_switching_threshold:
         score += 1
-        motivazione.append("TTF sopra soglia switching gas-carbone → prezzi power sostenuti")
+        motivazione.append("TTF sopra soglia switching gas-carbone")
     if rsi < 35:
         score += 1
-        motivazione.append(f"RSI {rsi:.1f} → ipervenduto")
+        motivazione.append(f"RSI basso ({rsi:.1f}) → ipervenduto")
     if power_price < ma200:
         score += 1
         motivazione.append(f"Prezzo < MA200 ({ma200:.1f}) → trend debole")
     if power_price > ma50:
         score -= 1
-        motivazione.append(f"Prezzo > MA50 ({ma50:.1f}) → breve termine positivo")
+        motivazione.append(f"Prezzo > MA50 ({ma50:.1f}) → segnale breve positivo")
+    if spread < 50:
+        score += 1
+        motivazione.append(f"Spread Power-TTF basso ({spread:.1f}) → rischio salita power")
 
     segnale = "HEDGIARE" if score >= 3 else "NON HEDGIARE"
     return segnale, motivazione, power_price
@@ -50,22 +54,24 @@ def decide_signal(power_price, ttf_price, prices_history):
 def generate_real_report():
     report = {}
     history = np.random.normal(loc=95, scale=5, size=200)
-    ttf_price = 41.5
-    power_prices = {
-        "Italia": {"Cal-26": 92, "Q4-25": 98, "Lug-25": 88},
-        "Francia": {"Cal-26": 105, "Q4-25": 107, "Lug-25": 101},
-        "Germania": {"Cal-26": 100, "Q4-25": 102, "Lug-25": 95}
+    prezzi = {
+        "Italia": {"Cal-26": 111.88, "Q4-25": 119.30, "Lug-25": 125.35},
+        "Francia": {"Cal-26": 102.15, "Q4-25": 108.40, "Lug-25": 113.25},
+        "Germania": {"Cal-26": 98.90, "Q4-25": 105.60, "Lug-25": 109.75},
+        "TTF": {"Front-Month": 38.25, "Cal-26": 41.10}
     }
 
-    for paese in power_prices:
+    ttf_price = prezzi["TTF"]["Cal-26"]
+
+    for paese in ["Italia", "Francia", "Germania"]:
         report[paese] = {}
-        for prodotto in power_prices[paese]:
-            prezzo = power_prices[paese][prodotto]
-            segnale, motivo, price = decide_signal(prezzo, ttf_price, history)
+        for prodotto in prezzi[paese]:
+            prezzo = prezzi[paese][prodotto]
+            segnale, motivo, prezzo_corrente = decide_signal(prezzo, ttf_price, history)
             report[paese][prodotto] = {
                 "segnale": segnale,
                 "motivazione": " | ".join(motivo),
-                "prezzo": round(price, 2)
+                "prezzo": round(prezzo_corrente, 2)
             }
 
     return report
