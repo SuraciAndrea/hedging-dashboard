@@ -1,31 +1,28 @@
 
 import streamlit as st
 from report_generator import generate_real_report
-from ttf_scraper import get_ttf_prices
-from power_scraper import get_power_prices
+from price_scraper import get_all_market_prices
 from price_logger import log_price
 from chart_generator import generate_price_chart
 import os
 
 st.set_page_config(page_title="Hedging Dashboard", layout="wide")
-st.title("📊 Dashboard Hedging Energia – Prezzi reali cmdty")
+st.title("📊 Dashboard Hedging Energia – Prezzi ICE cmdty (Elettricità + TTF)")
 
 if st.button("🔁 Genera Report"):
     with st.spinner("Analisi in corso..."):
+        prices = get_all_market_prices()
         report = generate_real_report()
-        ttf_data = get_ttf_prices()
-        power_data = get_power_prices()
+        st.success("Report generato con prezzi ICE cmdty reali")
 
-        st.success("Report generato con logica reale e prezzi cmdty")
+        st.subheader("🔥 Prezzi Gas TTF (ICE cmdty)")
+        for contratto, prezzo in prices["TTF"].items():
+            st.write(f"{contratto}: {prezzo} €/MWh")
 
-        st.subheader("💨 Prezzi TTF (Investing.com)")
-        for k, v in ttf_data.items():
-            st.write(f"{k}: {v}")
-
-        st.subheader("⚡ Prezzi Future Energia (ICE cmdty)")
-        for paese in power_data:
+        st.subheader("⚡ Prezzi Energia (ICE cmdty)")
+        for paese in ["Italia", "Francia", "Germania"]:
             st.write(f"📍 {paese}")
-            for prodotto, prezzo in power_data[paese].items():
+            for prodotto, prezzo in prices[paese].items():
                 st.write(f"{prodotto}: {prezzo} €/MWh")
 
         for paese in ["Italia", "Francia", "Germania"]:
